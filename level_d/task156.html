@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Таймер обратного отсчёта</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 30px;
+            background: #edf2ff;
+        }
+        .box {
+            max-width: 420px;
+            margin: 40px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 16px;
+        }
+        input, button {
+            padding: 12px;
+            margin: 5px;
+            font-size: 16px;
+        }
+        #display {
+            font-size: 48px;
+            margin: 25px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h1>Таймер</h1>
+    <label for="seconds">Количество секунд:</label><br>
+    <input type="number" id="seconds" min="1" max="86400" value="60">
+
+    <div id="display">60</div>
+    <p id="message" aria-live="polite">Готов к запуску</p>
+
+    <button id="start">Старт</button>
+    <button id="pause">Пауза</button>
+    <button id="reset">Сброс</button>
+
+    <p><a href="index.html">Назад к заданиям</a></p>
+</div>
+
+<script>
+"use strict";
+
+const secondsInput = document.getElementById("seconds");
+const display = document.getElementById("display");
+const message = document.getElementById("message");
+
+let remaining = 60;
+let timerId = null;
+
+function showTime() {
+    const minutes = Math.floor(remaining / 60);
+    const seconds = remaining % 60;
+
+    display.textContent =
+        String(minutes).padStart(2, "0") + ":" +
+        String(seconds).padStart(2, "0");
+}
+
+function stopTimer() {
+    if (timerId !== null) {
+        clearInterval(timerId);
+        timerId = null;
+    }
+}
+
+document.getElementById("start").addEventListener("click", () => {
+    if (timerId !== null) return;
+
+    if (remaining <= 0) {
+        const value = Number(secondsInput.value);
+
+        if (!Number.isInteger(value) || value < 1 || value > 86400) {
+            message.textContent = "Введите число от 1 до 86400";
+            return;
+        }
+
+        remaining = value;
+    }
+
+    message.textContent = "Таймер работает";
+    showTime();
+
+    timerId = setInterval(() => {
+        remaining--;
+        showTime();
+
+        if (remaining <= 0) {
+            stopTimer();
+            remaining = 0;
+            showTime();
+            message.textContent = "Время вышло!";
+        }
+    }, 1000);
+});
+
+document.getElementById("pause").addEventListener("click", () => {
+    stopTimer();
+    message.textContent = remaining > 0 ? "Таймер на паузе" : "Таймер остановлен";
+});
+
+document.getElementById("reset").addEventListener("click", () => {
+    stopTimer();
+
+    const value = Number(secondsInput.value);
+
+    if (!Number.isInteger(value) || value < 1 || value > 86400) {
+        remaining = 0;
+        display.textContent = "--:--";
+        message.textContent = "Введите число от 1 до 86400";
+        return;
+    }
+
+    remaining = value;
+    showTime();
+    message.textContent = "Таймер сброшен";
+});
+
+secondsInput.addEventListener("change", () => {
+    if (timerId !== null) return;
+
+    const value = Number(secondsInput.value);
+
+    if (Number.isInteger(value) && value >= 1 && value <= 86400) {
+        remaining = value;
+        showTime();
+        message.textContent = "Готов к запуску";
+    }
+});
+
+showTime();
+</script>
+</body>
+</html>

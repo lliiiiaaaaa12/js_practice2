@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация IT-проектов</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: Arial, sans-serif;
+            color: #243047;
+            background: #f1f5f9;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .panel {
+            background: white;
+            padding: 22px;
+            margin-bottom: 22px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #0000000d;
+        }
+
+        h1, h2 {
+            color: #173b70;
+        }
+
+        label {
+            display: block;
+            margin: 12px 0 6px;
+            font-weight: bold;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 11px;
+            font-size: 15px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+        }
+
+        button {
+            margin-top: 12px;
+            cursor: pointer;
+            border: none;
+            color: white;
+            background: #2563eb;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .delete-button {
+            background: #dc2626;
+            padding: 8px;
+        }
+
+        .delete-button:hover {
+            background: #b91c1c;
+        }
+
+        .search {
+            margin-bottom: 15px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 850px;
+        }
+
+        th, td {
+            border: 1px solid #dbe2ea;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #eaf0f9;
+        }
+
+        td select {
+            min-width: 150px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 12px;
+        }
+
+        .stat {
+            background: #eaf2ff;
+            padding: 16px;
+            border-radius: 8px;
+        }
+
+        .stat strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .message {
+            min-height: 24px;
+        }
+
+        .top-link {
+            display: inline-block;
+            margin-bottom: 18px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a class="top-link" href="index.html">← Назад к заданиям</a>
+
+    <h1>Система регистрации IT-проектов</h1>
+    <p>Учебная система инновационного центра колледжа.</p>
+
+    <section class="panel">
+        <h2>Регистрация проекта</h2>
+
+        <form id="projectForm">
+            <label for="projectName">Название проекта *</label>
+            <input
+                id="projectName"
+                type="text"
+                maxlength="100"
+                required
+                placeholder="Например, Smart Campus"
+            >
+
+            <label for="participant">ФИО участника *</label>
+            <input
+                id="participant"
+                type="text"
+                maxlength="120"
+                required
+                placeholder="Учебное ФИО"
+            >
+
+            <label for="direction">Направление *</label>
+            <select id="direction" required>
+                <option value="">Выберите направление</option>
+                <option value="Искусственный интеллект">
+                    Искусственный интеллект
+                </option>
+                <option value="Веб-разработка">Веб-разработка</option>
+                <option value="Мобильные приложения">
+                    Мобильные приложения
+                </option>
+                <option value="Робототехника">Робототехника</option>
+            </select>
+
+            <label for="submissionDate">Дата подачи *</label>
+            <input id="submissionDate" type="date" required>
+
+            <label for="status">Статус *</label>
+            <select id="status" required>
+                <option value="На рассмотрении">На рассмотрении</option>
+                <option value="В работе">В работе</option>
+                <option value="Завершён">Завершён</option>
+            </select>
+
+            <button type="submit">Зарегистрировать проект</button>
+        </form>
+
+        <p id="formMessage" class="message" aria-live="polite"></p>
+    </section>
+
+    <section class="panel">
+        <h2>Поиск проектов</h2>
+        <input
+            id="search"
+            class="search"
+            type="search"
+            placeholder="Введите название проекта..."
+        >
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Название</th>
+                        <th>Участник</th>
+                        <th>Направление</th>
+                        <th>Дата</th>
+                        <th>Статус</th>
+                        <th>Действие</th>
+                    </tr>
+                </thead>
+                <tbody id="projectTable"></tbody>
+            </table>
+        </div>
+
+        <p id="emptyMessage"></p>
+    </section>
+
+    <section class="panel">
+        <h2>Статистика по направлениям</h2>
+        <div id="statistics" class="stats"></div>
+        <h3 id="totalProjects"></h3>
+    </section>
+</div>
+
+<script>
+"use strict";
+
+const STORAGE_KEY = "collegeITProjects160";
+
+const directions = [
+    "Искусственный интеллект",
+    "Веб-разработка",
+    "Мобильные приложения",
+    "Робототехника"
+];
+
+const statuses = [
+    "На рассмотрении",
+    "В работе",
+    "Завершён"
+];
+
+const form = document.getElementById("projectForm");
+const nameInput = document.getElementById("projectName");
+const participantInput = document.getElementById("participant");
+const directionInput = document.getElementById("direction");
+const dateInput = document.getElementById("submissionDate");
+const statusInput = document.getElementById("status");
+const searchInput = document.getElementById("search");
+const tableBody = document.getElementById("projectTable");
+const formMessage = document.getElementById("formMessage");
+
+let projects = loadProjects();
+
+function loadProjects() {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+
+        if (!saved) return [];
+
+        const parsed = JSON.parse(saved);
+
+        if (!Array.isArray(parsed)) return [];
+
+        // Проверяем структуру загруженных объектов.
+        return parsed.filter(project =>
+            project &&
+            Number.isSafeInteger(project.id) &&
+            typeof project.name === "string" &&
+            typeof project.participant === "string" &&
+            directions.includes(project.direction) &&
+            typeof project.date === "string" &&
+            statuses.includes(project.status)
+        );
+    } catch (error) {
+        console.error("Не удалось загрузить проекты:", error);
+        return [];
+    }
+}
+
+function saveProjects() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+        return true;
+    } catch (error) {
+        console.error("Не удалось сохранить проекты:", error);
+        formMessage.textContent =
+            "Ошибка сохранения. Проверьте настройки хранилища браузера.";
+        return false;
+    }
+}
+
+function createCell(value) {
+    const cell = document.createElement("td");
+    cell.textContent = value;
+    return cell;
+}
+
+function renderProjects() {
+    tableBody.replaceChildren();
+
+    const query = searchInput.value.trim().toLocaleLowerCase("ru");
+
+    const filtered = projects.filter(project =>
+        project.name.toLocaleLowerCase("ru").includes(query)
+    );
+
+    filtered.forEach((project, index) => {
+        const row = document.createElement("tr");
+
+        row.appendChild(createCell(index + 1));
+        row.appendChild(createCell(project.name));
+        row.appendChild(createCell(project.participant));
+        row.appendChild(createCell(project.direction));
+        row.appendChild(createCell(project.date));
+
+        const statusCell = document.createElement("td");
+        const statusSelect = document.createElement("select");
+
+        statuses.forEach(status => {
+            const option = document.createElement("option");
+            option.value = status;
+            option.textContent = status;
+            statusSelect.appendChild(option);
+        });
+
+        statusSelect.value = project.status;
+
+        statusSelect.addEventListener("change", () => {
+            const previousStatus = project.status;
+            project.status = statusSelect.value;
+
+            if (saveProjects()) {
+                renderProjects();
+                formMessage.textContent = "Статус проекта обновлён.";
+            } else {
+                project.status = previousStatus;
+                statusSelect.value = previousStatus;
+            }
+        });
+
+        statusCell.appendChild(statusSelect);
+        row.appendChild(statusCell);
+
+        const actionCell = document.createElement("td");
+        const deleteButton = document.createElement("button");
+
+        deleteButton.type = "button";
+        deleteButton.textContent = "Удалить";
+        deleteButton.className = "delete-button";
+
+        deleteButton.addEventListener("click", () => {
+            const previousProjects = projects;
+            projects = projects.filter(item => item.id !== project.id);
+
+            if (saveProjects()) {
+                renderProjects();
+                renderStatistics();
+                formMessage.textContent = "Проект удалён.";
+            } else {
+                projects = previousProjects;
+                renderProjects();
+            }
+        });
+
+        actionCell.appendChild(deleteButton);
+        row.appendChild(actionCell);
+
+        tableBody.appendChild(row);
+    });
+
+    document.getElementById("emptyMessage").textContent =
+        filtered.length === 0
+            ? "Проекты не найдены."
+            : "Найдено проектов: " + filtered.length;
+}
+
+function renderStatistics() {
+    const statistics = document.getElementById("statistics");
+    statistics.replaceChildren();
+
+    directions.forEach(direction => {
+        const count = projects.filter(
+            project => project.direction === direction
+        ).length;
+
+        const card = document.createElement("div");
+        card.className = "stat";
+
+        const title = document.createElement("strong");
+        title.textContent = direction;
+
+        const value = document.createElement("span");
+        value.textContent = "Количество: " + count;
+
+        card.append(title, value);
+        statistics.appendChild(card);
+    });
+
+    document.getElementById("totalProjects").textContent =
+        "Всего зарегистрировано проектов: " + projects.length;
+}
+
+form.addEventListener("submit", event => {
+    event.preventDefault();
+
+    const name = nameInput.value.trim();
+    const participant = participantInput.value.trim();
+    const direction = directionInput.value;
+    const date = dateInput.value;
+    const status = statusInput.value;
+
+    if (!name || !participant || !direction || !date || !status) {
+        formMessage.textContent = "Заполните все обязательные поля.";
+        return;
+    }
+
+    if (!directions.includes(direction) || !statuses.includes(status)) {
+        formMessage.textContent = "Выберите допустимые значения.";
+        return;
+    }
+
+    // Не разрешаем будущую дату подачи.
+    const selectedDate = new Date(date + "T00:00:00");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (
+        Number.isNaN(selectedDate.getTime()) ||
+        selectedDate > today ||
+        selectedDate.toISOString().slice(0, 10) !== date
+    ) {
+        formMessage.textContent =
+            "Введите корректную дату, не превышающую сегодняшнюю.";
+        return;
+    }
+
+    const project = {
+        id: Date.now(),
+        name,
+        participant,
+        direction,
+        date,
+        status
+    };
+
+    projects.push(project);
+
+    if (!saveProjects()) {
+        projects.pop();
+        return;
+    }
+
+    form.reset();
+
+    // После регистрации поиск сбрасывается, чтобы запись была видна.
+    searchInput.value = "";
+
+    formMessage.textContent = "Проект успешно зарегистрирован.";
+
+    renderProjects();
+    renderStatistics();
+});
+
+searchInput.addEventListener("input", renderProjects);
+
+// Первоначальное отображение сохранённых данных.
+renderProjects();
+renderStatistics();
+</script>
+</body>
+</html>

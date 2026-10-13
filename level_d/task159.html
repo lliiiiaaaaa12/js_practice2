@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор вопросов JavaScript</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #eef2ff;
+            padding: 25px;
+            text-align: center;
+        }
+        .card {
+            max-width: 650px;
+            margin: 40px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 16px;
+        }
+        #question {
+            min-height: 90px;
+            font-size: 22px;
+            line-height: 1.5;
+        }
+        button {
+            padding: 12px 18px;
+            margin: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>Вопросы по JavaScript</h1>
+    <p id="counter">Вопросов осталось: 10</p>
+    <div id="question" aria-live="polite">
+        Нажмите кнопку, чтобы получить вопрос.
+    </div>
+
+    <button id="next">Следующий вопрос</button>
+    <button id="restart">Начать заново</button>
+    <p><a href="index.html">Назад к заданиям</a></p>
+</div>
+
+<script>
+"use strict";
+
+const questions = [
+    "Что такое JavaScript?",
+    "Для чего используется console.log()?",
+    "Чем отличаются let и const?",
+    "Что такое условный оператор if?",
+    "Для чего используется цикл for?",
+    "Что такое массив?",
+    "Как добавить элемент в массив?",
+    "Что такое функция?",
+    "Для чего используется return?",
+    "Что такое объект в JavaScript?"
+];
+
+let remainingQuestions = [];
+
+const questionElement = document.getElementById("question");
+const counterElement = document.getElementById("counter");
+const nextButton = document.getElementById("next");
+
+function shuffleQuestions() {
+    remainingQuestions = [...questions];
+
+    // Алгоритм перемешивания массива
+    for (let i = remainingQuestions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+
+        [remainingQuestions[i], remainingQuestions[j]] =
+            [remainingQuestions[j], remainingQuestions[i]];
+    }
+
+    nextButton.disabled = false;
+    questionElement.textContent = "Нажмите «Следующий вопрос».";
+    updateCounter();
+}
+
+function updateCounter() {
+    counterElement.textContent =
+        "Вопросов осталось: " + remainingQuestions.length;
+}
+
+nextButton.addEventListener("click", () => {
+    if (remainingQuestions.length === 0) {
+        questionElement.textContent = "Вопросы закончились!";
+        nextButton.disabled = true;
+        updateCounter();
+        return;
+    }
+
+    // Каждый вопрос удаляется после показа
+    questionElement.textContent = remainingQuestions.pop();
+
+    updateCounter();
+
+    if (remainingQuestions.length === 0) {
+        nextButton.textContent = "Вопросы закончились";
+    }
+});
+
+document.getElementById("restart").addEventListener("click", () => {
+    nextButton.textContent = "Следующий вопрос";
+    shuffleQuestions();
+});
+
+shuffleQuestions();
+</script>
+</body>
+</html>
